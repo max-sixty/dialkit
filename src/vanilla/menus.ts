@@ -4,7 +4,7 @@ import { openDropdownOnKey } from '../control-keyboard';
 import { getDialKitPortalRoot, getDropdownPosition, observeDropdownPosition } from '../dropdown-position';
 import { findControl, formatToggleShortcut } from '../shortcut-utils';
 import { ICON_CHEVRON, ICON_TRASH, ICON_PLUS, ICON_CHECK } from '../icons';
-import { element, icon, type Mounted } from './dom';
+import { element, icon, setProp, type Mounted } from './dom';
 export function popupMenu(trigger: HTMLButtonElement, className: string, kind: 'select' | 'presets' | 'help', populate: (popup: HTMLElement) => void) {
   let popup: HTMLDivElement | undefined;
   let stopKeyboard: (() => void) | undefined, stopPosition: (() => void) | undefined;
@@ -100,9 +100,9 @@ export function mountSelectControl(host: HTMLElement, initial: SelectControlProp
     }));
   });
   function render() {
-    label.textContent = props.label;
-    value.textContent = options().find(o => o.value === props.value)?.label ?? props.value;
-    trigger.disabled = !props.options.length;
+    setProp(label, 'textContent', props.label);
+    setProp(value, 'textContent', options().find(o => o.value === props.value)?.label ?? props.value);
+    setProp(trigger, 'disabled', !props.options.length);
     menu.refresh();
   }
   render();

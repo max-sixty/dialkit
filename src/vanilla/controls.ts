@@ -4,7 +4,7 @@ import { observeTextSize } from '../text-autosize';
 import { createPanelSectionTransition, observePanelHeader } from '../panel-size';
 import { ICON_CLOSE, ICON_CHEVRON, ICON_PANEL } from '../icons';
 import type { ShortcutConfig } from '../store/DialStore';
-import { element, icon, svg, type Mounted } from './dom';
+import { element, icon, setAttr, setProp, svg, type Mounted } from './dom';
 import { animateSpring } from './animation';
 export interface FolderProps {
   title: string;
@@ -182,9 +182,9 @@ export function mountSegmentedControl<T extends string>(host: HTMLElement, initi
     }
     buttons.forEach((b, i) => {
       const active = props.options[i].value === props.value;
-      b.dataset.active = String(active);
-      b.setAttribute('aria-checked', String(active));
-      b.tabIndex = active ? 0 : -1;
+      setAttr(b, 'data-active', String(active));
+      setAttr(b, 'aria-checked', String(active));
+      setAttr(b, 'tabindex', active ? '0' : '-1');
       if (active) {
         pill.style.left = `${b.offsetLeft}px`;
         pill.style.width = `${b.offsetWidth}px`;
@@ -220,8 +220,7 @@ export function mountToggle(host: HTMLElement, initial: ToggleProps): Mounted<To
   const segmentProps = () => ({ options: [{ value: 'off', label: 'Off' }, { value: 'on', label: 'On' }], value: props.checked ? 'on' : 'off', onChange: (value: string) => props.onChange(value === 'on') });
   const segmented = mountSegmentedControl(row, segmentProps());
   function render() {
-    label.textContent = props.label;
-    appendShortcut(label, props.shortcut, props.shortcutActive, true);
+    renderLabel(label, props.label, props.shortcut, props.shortcutActive, true);
     segmented.update(segmentProps());
   }
   render();
@@ -235,10 +234,13 @@ export function mountToggle(host: HTMLElement, initial: ToggleProps): Mounted<To
     }
   };
 }
-function appendShortcut(label: HTMLElement, shortcut?: ShortcutConfig, active = false, toggle = false) {
-  if (!shortcut)
-    return;
-  label.append(element('span', `dialkit-shortcut-pill${active ? ' dialkit-shortcut-pill-active' : ''}`, toggle ? formatToggleShortcut(shortcut) : formatSliderShortcut(shortcut)));
+function renderLabel(label: HTMLElement, text: string, shortcut?: ShortcutConfig, active = false, toggle = false) {
+  const next = label.cloneNode() as HTMLElement;
+  next.textContent = text;
+  if (shortcut)
+    next.append(element('span', `dialkit-shortcut-pill${active ? ' dialkit-shortcut-pill-active' : ''}`, toggle ? formatToggleShortcut(shortcut) : formatSliderShortcut(shortcut)));
+  if (!next.isEqualNode(label))
+    label.replaceChildren(...next.childNodes);
 }
 export interface SliderProps {
   label: string;
@@ -301,15 +303,14 @@ export function mountSlider(host: HTMLElement, initial: SliderProps): Mounted<Sl
     handle.style.transform = `translateY(-50%) scale(${active ? 1 : 0.25}, ${active && dodge ? 0.75 : 1})`;
     handle.style.transition = 'opacity 150ms, transform 200ms';
     track.classList.toggle('dialkit-slider-active', active);
-    track.setAttribute('aria-label', props.label);
-    track.setAttribute('aria-valuemin', String(min));
-    track.setAttribute('aria-valuemax', String(max));
-    track.setAttribute('aria-valuenow', String(props.value));
-    track.setAttribute('aria-valuetext', `${formatted()}${props.unit ? ` ${props.unit}` : ''}`);
-    label.textContent = props.label;
-    appendShortcut(label, props.shortcut, props.shortcutActive);
-    display.textContent = formatted();
-    input.setAttribute('aria-label', `${props.label} value`);
+    setAttr(track, 'aria-label', props.label);
+    setAttr(track, 'aria-valuemin', String(min));
+    setAttr(track, 'aria-valuemax', String(max));
+    setAttr(track, 'aria-valuenow', String(props.value));
+    setAttr(track, 'aria-valuetext', `${formatted()}${props.unit ? ` ${props.unit}` : ''}`);
+    renderLabel(label, props.label, props.shortcut, props.shortcutActive);
+    setProp(display, 'textContent', formatted());
+    setAttr(input, 'aria-label', `${props.label} value`);
     const signature = `${min}:${max}:${step}`;
     if (signature !== hashSignature) {
       hashSignature = signature;
@@ -482,10 +483,9 @@ export function mountTextControl(host: HTMLElement, initial: TextControlProps): 
   host.append(row);
   const size = observeTextSize(input);
   function render() {
-    label.textContent = props.label;
-    if (input.value !== props.value)
-      input.value = props.value;
-    input.placeholder = props.placeholder ?? '';
+    setProp(label, 'textContent', props.label);
+    setProp(input, 'value', props.value);
+    setProp(input, 'placeholder', props.placeholder ?? '');
     size.update();
   }
   input.addEventListener('input', () => {

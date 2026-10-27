@@ -1,4 +1,5 @@
 import type { EasingConfig } from './store/DialStore';
+import { setAttr, setProp } from './vanilla/dom';
 import { easingGuideEnd, easingHandleFromKey, fitEasingGraph, moveEasingHandle, normalizeEase, type BezierPoints, type GraphPoint } from './easing-geometry';
 
 export interface EasingVisualizationProps {
@@ -83,28 +84,28 @@ export function mountEasingVisualization(host: HTMLElement, initial: EasingVisua
   host.append(root);
 
   function line(node: SVGLineElement, a: GraphPoint, b: GraphPoint) {
-    node.setAttribute('x1', String(a.x)); node.setAttribute('y1', String(a.y));
-    node.setAttribute('x2', String(b.x)); node.setAttribute('y2', String(b.y));
+    setAttr(node, 'x1', String(a.x)); setAttr(node, 'y1', String(a.y));
+    setAttr(node, 'x2', String(b.x)); setAttr(node, 'y2', String(b.y));
   }
 
   function render() {
     const graph = fitEasingGraph(value, width, height);
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    setAttr(svg, 'viewBox', `0 0 ${width} ${height}`);
     line(reference, graph.start, graph.end);
     [graph.start, graph.end].forEach((point, index) => {
       line(tangents[index], point, easingGuideEnd(point, graph.handles[index]));
-      endpoints[index].setAttribute('cx', String(point.x));
-      endpoints[index].setAttribute('cy', String(point.y));
-      endpoints[index].setAttribute('r', '2.5');
+      setAttr(endpoints[index], 'cx', String(point.x));
+      setAttr(endpoints[index], 'cy', String(point.y));
+      setAttr(endpoints[index], 'r', '2.5');
       const button = handles[index];
       button.style.left = `${graph.handles[index].x / width * 100}%`;
       button.style.top = `${graph.handles[index].y / height * 100}%`;
-      button.disabled = !props.onChange;
-      button.setAttribute('aria-label', `Bézier handle ${index + 1}: X ${value[index * 2]}, Y ${value[index * 2 + 1]}`);
+      setProp(button, 'disabled', !props.onChange);
+      setAttr(button, 'aria-label', `Bézier handle ${index + 1}: X ${value[index * 2]}, Y ${value[index * 2 + 1]}`);
     });
-    root.setAttribute('role', props.onChange ? 'group' : 'img');
+    setAttr(root, 'role', props.onChange ? 'group' : 'img');
     const { start, end, handles: [a, b] } = graph;
-    path.setAttribute('d', `M ${start.x} ${start.y} C ${a.x} ${a.y}, ${b.x} ${b.y}, ${end.x} ${end.y}`);
+    setAttr(path, 'd', `M ${start.x} ${start.y} C ${a.x} ${a.y}, ${b.x} ${b.y}, ${end.x} ${end.y}`);
   }
 
   function measure() {

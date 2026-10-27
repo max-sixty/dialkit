@@ -11,6 +11,16 @@ export function element<K extends keyof HTMLElementTagNameMap>(tag: K, className
     (node as HTMLButtonElement).type = 'button';
   return node;
 }
+// Render functions restate every value on each update. Writing a value a node already
+// holds still queues a mutation record and can invalidate style, so these skip it.
+export function setAttr(node: Element, name: string, value: string) {
+  if (node.getAttribute(name) !== value)
+    node.setAttribute(name, value);
+}
+export function setProp<T extends object, K extends keyof T>(node: T, key: K, value: T[K]) {
+  if (node[key] !== value)
+    node[key] = value;
+}
 export function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number> = {}): SVGElementTagNameMap[K] {
   const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
   for (const [key, value] of Object.entries(attrs))
